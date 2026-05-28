@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHS Chemical Waste Label Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to ensure canvas scales beautifully on screens */
+        #labelCanvas {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8" onload="drawLabel()">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900">GHS Chemical Waste Label Generator</h1>
+                <p class="text-slate-500 mt-2">Generate high-fidelity, GHS-compliant monochrome labels tailored for Coe College Chemistry Labs.</p>
+            </div>
+            
+            <!-- Quick Presets -->
+            <div class="flex flex-wrap gap-2 justify-center bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider self-center px-2">Presets:</span>
+                <button onclick="loadPreset('halogenated')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold rounded-lg transition-colors">Halogenated Solvents</button>
+                <button onclick="loadPreset('acidic')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold rounded-lg transition-colors">Acidic Waste</button>
+                <button onclick="loadPreset('blank')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded-lg transition-colors border border-amber-200">Blank Printable Form</button>
+            </div>
+        </header>
+
+        <div class="flex flex-col xl:flex-row gap-8">
+            
+            <!-- Input Form -->
+            <div class="w-full xl:w-5/12 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-6">
+                <div>
+                    <h2 class="text-xl font-semibold border-b pb-2 mb-4">1. Lab & Generator Information</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase">Lab Group</label>
+                            <input type="text" id="input-group" placeholder="e.g., Organic Lab Section A" oninput="drawLabel()" 
+                                class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase">Phone Number</label>
+                            <input type="text" id="input-phone" placeholder="e.g., 319-399-8000" oninput="drawLabel()" 
+                                class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase">Responsible Individual</label>
+                            <input type="text" id="input-responsible" placeholder="e.g., Dr. Jane Smith" oninput="drawLabel()" 
+                                class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase">Start Date</label>
+                            <input type="date" id="input-date" oninput="drawLabel()" 
+                                class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase">Signal Word</label>
+                            <select id="input-signal" onchange="drawLabel()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                <option value="DANGER">Danger</option>
+                                <option value="WARNING">Warning</option>
+                                <option value="">None (Non-Hazardous)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold border-b pb-2 mb-4">2. Chemical Contents (Up to 5 Rows)</h2>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-12 gap-2 font-semibold text-xs text-slate-400 uppercase px-1">
+                            <div class="col-span-9">Chemical Name</div>
+                            <div class="col-span-3 text-right">Approx. %</div>
+                        </div>
+                        <!-- Row 1 -->
+                        <div class="grid grid-cols-12 gap-2">
+                            <input type="text" id="chem-name-1" placeholder="Chemical Name 1" oninput="drawLabel()" class="col-span-9 px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+                            <input type="text" id="chem-pct-1" placeholder="%" oninput="drawLabel()" class="col-span-3 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center">
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="grid grid-cols-12 gap-2">
+                            <input type="text" id="chem-name-2" placeholder="Chemical Name 2" oninput="drawLabel()" class="col-span-9 px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+                            <input type="text" id="chem-pct-2" placeholder="%" oninput="drawLabel()" class="col-span-3 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center">
+                        </div>
+                        <!-- Row 3 -->
+                        <div class="grid grid-cols-12 gap-2">
+                            <input type="text" id="chem-name-3" placeholder="Chemical Name 3" oninput="drawLabel()" class="col-span-9 px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+                            <input type="text" id="chem-pct-3" placeholder="%" oninput="drawLabel()" class="col-span-3 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center">
+                        </div>
+                        <!-- Row 4 -->
+                        <div class="grid grid-cols-12 gap-2">
+                            <input type="text" id="chem-name-4" placeholder="Chemical Name 4" oninput="drawLabel()" class="col-span-9 px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+                            <input type="text" id="chem-pct-4" placeholder="%" oninput="drawLabel()" class="col-span-3 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center">
+                        </div>
+                        <!-- Row 5 -->
+                        <div class="grid grid-cols-12 gap-2">
+                            <input type="text" id="chem-name-5" placeholder="Chemical Name 5" oninput="drawLabel()" class="col-span-9 px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+                            <input type="text" id="chem-pct-5" placeholder="%" oninput="drawLabel()" class="col-span-3 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold border-b pb-2 mb-4">3. Hazards Checklist</h2>
+                    <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="checkbox" name="hazard" value="Toxic" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
+                            💀 Toxic
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="checkbox" name="hazard" value="Corrosive" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
+                            🧪 Corrosive
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="checkbox" name="hazard" value="Flammable" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
+                            🔥 Flammable
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="checkbox" name="hazard" value="Oxidizer" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
+                            ⭕ Oxidizer
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="checkbox" name="hazard" value="Reactive" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
+                            💥 Reactive (Air/Water)
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="checkbox" name="hazard" value="Health Hazard" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
+                            🫀 Health Hazard
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold border-b pb-2 mb-4">4. EHS Safety Assistance Contacts</h2>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase">Office / Department</label>
+                            <input type="text" id="ehs-dept" value="Environmental Health & Safety" oninput="drawLabel()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase">EHS Phone</label>
+                                <input type="text" id="ehs-phone" value="319-399-8000" oninput="drawLabel()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase">EHS Email</label>
+                                <input type="text" id="ehs-email" value="o-ehs@coe.edu" oninput="drawLabel()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Preview -->
+            <div class="w-full xl:w-7/12 flex flex-col">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex-grow flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-6 border-b pb-2">
+                        <h2 class="text-xl font-semibold">Live Printable Preview</h2>
+                        <button onclick="downloadLabel()" 
+                            class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Download High-Res PNG
+                        </button>
+                    </div>
+                    
+                    <div class="relative w-full flex justify-center bg-slate-100 p-4 md:p-8 rounded-xl border border-dashed border-slate-300 overflow-x-auto">
+                        <!-- Standard 800x600 high quality layout canvas -->
+                        <canvas id="labelCanvas" width="800" height="600" class="bg-white shadow-md border border-slate-400 rounded-sm"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Draw an 8-pointed standard starburst
+        function drawStarburst(ctx, cx, cy, r) {
+            ctx.beginPath();
+            let points = 8;
+            for (let i = 0; i < points * 2; i++) {
+                let angle = (i * Math.PI) / points;
+                let curR = (i % 2 === 0) ? r : r * 0.35;
+                let x = cx + Math.cos(angle) * curR;
+                let y = cy + Math.sin(angle) * curR;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Draw GHS Diamond Frame + Vector Icon Art
+        function drawGHSDiamond(ctx, x, y, size, pictogramType, isChecked, label, subLabel) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // 1. Draw diamond frame (rotated at 45 deg)
+            ctx.rotate(Math.PI / 4);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-size/2, -size/2, size, size);
+            
+            // Solid bolder frame if checked
+            if (isChecked) {
+                ctx.lineWidth = 5;
+                ctx.strokeRect(-size/2, -size/2, size, size);
+            }
+            
+            ctx.rotate(-Math.PI / 4); // reset rotation for rendering upright icon art
+            
+            const s = size / 50; // Dynamic scale constant
+
+            // 2. Draw standard monochrome vector art if checked
+            if (isChecked) {
+                ctx.fillStyle = 'black';
+                ctx.strokeStyle = 'black';
+                
+                switch(pictogramType) {
+                    case 'Toxic':
+                        // Crossbones behind skull
+                        ctx.lineWidth = 3 * s;
+                        ctx.lineCap = 'round';
+                        ctx.beginPath();
+                        ctx.moveTo(-16 * s, -14 * s); ctx.lineTo(16 * s, 14 * s);
+                        ctx.moveTo(16 * s, -14 * s); ctx.lineTo(-16 * s, 14 * s);
+                        ctx.stroke();
+
+                        // Bone Knobs
+                        const knobs = [[-16, -14], [16, 14], [16, -14], [-16, 14]];
+                        knobs.forEach(([kx, ky]) => {
+                            ctx.beginPath();
+                            ctx.arc(kx * s, ky * s - 1.5 * s, 2.5 * s, 0, Math.PI * 2);
+                            ctx.arc(kx * s - 1.5 * s, ky * s, 2.5 * s, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+
+                        // Skull silhouette
+                        ctx.beginPath();
+                        ctx.arc(0, -3 * s, 8.5 * s, Math.PI, 0);
+                        ctx.lineTo(5.5 * s, 6 * s);
+                        ctx.lineTo(-5.5 * s, 6 * s);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Teeth/Jaw Frame
+                        ctx.lineWidth = 1.5 * s;
+                        ctx.beginPath();
+                        ctx.moveTo(-3 * s, 6 * s);
+                        ctx.lineTo(-3 * s, 9 * s);
+                        ctx.lineTo(3 * s, 9 * s);
+                        ctx.lineTo(3 * s, 6 * s);
+                        ctx.stroke();
+                        
+                        // Teeth ticks
+                        ctx.beginPath();
+                        ctx.moveTo(-1 * s, 6 * s); ctx.lineTo(-1 * s, 9 * s);
+                        ctx.moveTo(1 * s, 6 * s); ctx.lineTo(1 * s, 9 * s);
+                        ctx.stroke();
+
+                        // Eye sockets (white cutout)
+                        ctx.fillStyle = 'white';
+                        ctx.beginPath();
+                        ctx.arc(-2.8 * s, -1 * s, 2 * s, 0, Math.PI * 2);
+                        ctx.arc(2.8 * s, -1 * s, 2 * s, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Nose cavity (white cutout)
+                        ctx.beginPath();
+                        ctx.moveTo(0, 1 * s);
+                        ctx.lineTo(-1.2 * s, 3.5 * s);
+                        ctx.lineTo(1.2 * s, 3.5 * s);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+
+                    case 'Corrosive':
+                        ctx.lineWidth = 2 * s;
+                        // Surface Plate (Left)
+                        ctx.beginPath();
+                        ctx.moveTo(-18 * s, 10 * s);
+                        ctx.lineTo(-3 * s, 10 * s);
+                        ctx.stroke();
+                        // Surface Plate Divot (Corrosion mark)
+                        ctx.beginPath();
+                        ctx.arc(-10 * s, 10 * s, 3 * s, 0, Math.PI);
+                        ctx.fillStyle = 'white';
+                        ctx.fill();
+                        ctx.strokeStyle = 'black';
+                        ctx.stroke();
+
+                        // Human Hand (Right)
+                        ctx.fillStyle = 'black';
+                        ctx.beginPath();
+                        ctx.moveTo(3 * s, 10 * s);
+                        ctx.lineTo(17 * s, 10 * s);
+                        ctx.lineTo(17 * s, 5 * s);
+                        ctx.lineTo(11 * s, 5 * s);
+                        ctx.closePath();
+                        ctx.fill();
+                        // Pouring Slanted Tube 1
+                        ctx.save();
+                        ctx.translate(-11 * s, -10 * s);
+                        ctx.rotate(-Math.PI / 6);
+                        ctx.strokeRect(-2.5 * s, -7 * s, 5 * s, 14 * s);
+                        ctx.restore();
+                        // Pouring Slanted Tube 2
+                        ctx.save();
+                        ctx.translate(11 * s, -10 * s);
+                        ctx.rotate(Math.PI / 6);
+                        ctx.strokeRect(-2.5 * s, -7 * s, 5 * s, 14 * s);
+                        ctx.restore();
+
+                        // Liquid Drops falling
+                        ctx.beginPath();
+                        ctx.arc(-8 * s, -2 * s, 1.5 * s, 0, Math.PI * 2);
+                        ctx.arc(-10 * s, 4 * s, 1.5 * s, 0, Math.PI * 2);
+                        ctx.arc(8 * s, -2 * s, 1.5 * s, 0, Math.PI * 2);
+                        ctx.arc(10 * s, 4 * s, 1.5 * s, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+
+                    case 'Flammable':
+                        // Standard Flame
+                        ctx.beginPath();
+                        ctx.moveTo(-15 * s, 12 * s);
+                        ctx.lineTo(15 * s, 12 * s);
+                        ctx.lineWidth = 3 * s;
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.moveTo(-11 * s, 9 * s);
+                        ctx.bezierCurveTo(-14 * s, -2 * s, -5 * s, -13 * s, -2 * s, -17 * s);
+                        ctx.bezierCurveTo(-4 * s, -7 * s, -6 * s, 0, -3 * s, 2 * s);
+                        ctx.bezierCurveTo(-2 * s, -9 * s, 4 * s, -15 * s, 8 * s, -17 * s);
+                        ctx.bezierCurveTo(6 * s, -5 * s, 4 * s, 1 * s, 6 * s, 3 * s);
+                        ctx.bezierCurveTo(9 * s, -1 * s, 11 * s, -6 * s, 12 * s, -8 * s);
+                        ctx.bezierCurveTo(14 * s, 2 * s, 10 * s, 9 * s, 6 * s, 9 * s);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+
+                    case 'Oxidizer':
+                        // Circle 'O' with Flame
+                        ctx.lineWidth = 3.5 * s;
+                        ctx.beginPath();
+                        ctx.arc(0, 5 * s, 8.5 * s, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.moveTo(-6 * s, -1 * s);
+                        ctx.bezierCurveTo(-10 * s, -9 * s, -3 * s, -15 * s, 0, -19 * s);
+                        ctx.bezierCurveTo(-1 * s, -11 * s, -3 * s, -7 * s, 0, -3 * s);
+                        ctx.bezierCurveTo(2 * s, -10 * s, 6 * s, -14 * s, 8 * s, -16 * s);
+                        ctx.bezierCurveTo(6 * s, -6 * s, 2 * s, -1 * s, 5 * s, -1 * s);
+                        ctx.bezierCurveTo(7 * s, -3 * s, 9 * s, -7 * s, 10 * s, -9 * s);
+                        ctx.bezierCurveTo(11 * s, -1 * s, 7 * s, 5 * s, 4 * s, 5 * s);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+
+                    case 'Reactive':
+                        // Exploding Bomb
+                        ctx.beginPath();
+                        ctx.arc(-4 * s, 4 * s, 5 * s, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.lineWidth = 2 * s;
+                        const explosionRays = [
+                            [-13, -13], [0, -17], [13, -13], [17, 0], [13, 13], [-15, 2]
+                        ];
+                        explosionRays.forEach(([rx, ry]) => {
+                            ctx.beginPath();
+                            ctx.moveTo(-4 * s, 4 * s);
+                            ctx.lineTo(rx * s, ry * s);
+                            ctx.stroke();
+                        });
+
+                        ctx.beginPath();
+                        ctx.moveTo(-9 * s, -4 * s); ctx.lineTo(-14 * s, -7 * s); ctx.lineTo(-11 * s, -1 * s);
+                        ctx.moveTo(4 * s, -9 * s); ctx.lineTo(7 * s, -14 * s); ctx.lineTo(9 * s, -7 * s);
+                        ctx.moveTo(7 * s, 1 * s); ctx.lineTo(13 * s, 4 * s); ctx.lineTo(9 * s, 7 * s);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+
+                    case 'Health Hazard':
+                        // Elegant bust outline + Exploding GHS center star
+                        ctx.beginPath();
+                        // 1. Head Silhouette
+                        ctx.arc(0, -9 * s, 5.5 * s, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // 2. Body / Shoulders Silhouette
+                        ctx.beginPath();
+                        ctx.moveTo(-16 * s, 14 * s);
+                        ctx.bezierCurveTo(-16 * s, 0, -8 * s, -1 * s, -6 * s, -1 * s);
+                        ctx.lineTo(6 * s, -1 * s);
+                        ctx.bezierCurveTo(8 * s, -1 * s, 16 * s, 0, 16 * s, 14 * s);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // 3. Crisp Exploding GHS Star (Cutout in White over chest)
+                        ctx.fillStyle = 'white';
+                        drawStarburst(ctx, 0, 6 * s, 6.5 * s);
+                        
+                        // 4. Starburst core definition detail
+                        ctx.fillStyle = 'black';
+                        drawStarburst(ctx, 0, 6 * s, 2 * s);
+                        break;
+                }
+            } else {
+                // Diagonal strike-through for unselected boxes
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-size * 0.35, -size * 0.35);
+                ctx.lineTo(size * 0.35, size * 0.35);
+                ctx.stroke();
+            }
+
+            // Labels under diamonds
+            ctx.fillStyle = 'black';
+            ctx.font = 'bold 11px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            
+            const checkSymbol = isChecked ? '☑' : '☐';
+            ctx.fillText(`${checkSymbol} ${label}`, 0, size * 0.78);
+            if (subLabel) {
+                ctx.font = '9px Arial, sans-serif';
+                ctx.fillText(subLabel, 0, size * 0.98);
+            }
+            
+            ctx.restore();
+        }
+
+        // Main Rendering Loop
+        function drawLabel() {
+            const canvas = document.getElementById('labelCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Reset background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Heavy Outer Border
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+            
+            // --- HEADER ---
+            ctx.font = 'bold 38px "Arial Black", Arial, sans-serif';
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'left';
+            ctx.fillText('HAZARDOUS WASTE', 25, 48);
+
+            ctx.font = 'bold 14px Arial, sans-serif';
+            ctx.fillText('Federal & State Laws Prohibit Improper Disposal', 25, 74);
+            
+            // Standard Signal text printed in the header frame (if any)
+            const signalWord = document.getElementById('input-signal').value;
+            if (signalWord) {
+                ctx.save();
+                ctx.fillStyle = 'black';
+                ctx.font = 'bold 32px Arial, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(signalWord, canvas.width - 25, 48);
+                ctx.restore();
+            }
+
+            // Double header line divider
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(10, 95);
+            ctx.lineTo(canvas.width - 10, 95);
+            ctx.stroke();
+
+            // --- LAB GROUP & PHONE DETAILS ROW ---
+            ctx.font = '16px Arial, sans-serif';
+            
+            const groupVal = document.getElementById('input-group').value || "_________________________________";
+            const phoneVal = document.getElementById('input-phone').value || "______________________";
+            const responsibleVal = document.getElementById('input-responsible').value || "________________________________________________________";
+            
+            let dateRaw = document.getElementById('input-date').value;
+            let dateVal = "___________________";
+            if (dateRaw) {
+                const d = new Date(dateRaw);
+                const userTimezoneOffset = d.getTimezoneOffset() * 60000;
+                dateVal = new Date(d.getTime() + userTimezoneOffset).toLocaleDateString();
+            }
+
+            ctx.font = 'bold 15px Arial, sans-serif';
+            ctx.fillText('Lab Group:', 25, 122);
+            ctx.font = '15px Courier New, monospace';
+            ctx.fillText(groupVal, 115, 122);
+
+            ctx.font = 'bold 15px Arial, sans-serif';
+            ctx.fillText('Phone:', 470, 122);
+            ctx.font = '15px Courier New, monospace';
+            ctx.fillText(phoneVal, 530, 122);
+
+            ctx.font = 'bold 15px Arial, sans-serif';
+            ctx.fillText('Responsible Individual:', 25, 155);
+            ctx.font = '15px Courier New, monospace';
+            ctx.fillText(responsibleVal, 205, 155);
+
+            // Row Underlines / Grids matching sample
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#aaa';
+            ctx.beginPath();
+            ctx.moveTo(115, 126); ctx.lineTo(450, 126);
+            ctx.moveTo(530, 126); ctx.lineTo(775, 126);
+            ctx.moveTo(205, 159); ctx.lineTo(775, 159);
+            ctx.stroke();
+
+            // --- MAIN CONTENTS TABLE ---
+            const tblX = 25;
+            const tblY = 175;
+            const tblWidth = 750;
+            const tblHeight = 205;
+            
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(tblX, tblY, tblWidth, tblHeight);
+            
+            // Left block division line (separating warning instruction checklist from names)
+            const ruleSplitX = 230;
+            ctx.beginPath();
+            ctx.moveTo(ruleSplitX, tblY);
+            ctx.lineTo(ruleSplitX, tblY + tblHeight);
+            ctx.stroke();
+
+            // Table Header Line
+            const rowH = 34;
+            ctx.beginPath();
+            ctx.moveTo(ruleSplitX, tblY + rowH);
+            ctx.lineTo(tblX + tblWidth, tblY + rowH);
+            ctx.stroke();
+
+            // Table Labels
+            ctx.font = 'bold 14px Arial, sans-serif';
+            ctx.fillText('Contents', ruleSplitX + 15, tblY + 22);
+            ctx.fillText('Approximate %', tblX + tblWidth - 140, tblY + 22);
+
+            // Vertical partition for approximate %
+            const pctSplitX = tblX + tblWidth - 160;
+            ctx.beginPath();
+            ctx.moveTo(pctSplitX, tblY);
+            ctx.lineTo(pctSplitX, tblY + tblHeight);
+            ctx.stroke();
+
+            // Draw left side guidelines warnings
+            ctx.font = 'italic bold 14px Arial, sans-serif';
+            ctx.fillText('Use Only Proper', tblX + 15, tblY + 30);
+            ctx.fillText('Chemical Names', tblX + 15, tblY + 48);
+            
+            ctx.font = 'bold 12px Arial, sans-serif';
+            ctx.fillText('No Abbreviations', tblX + 15, tblY + 90);
+            ctx.fillText('No Formulas', tblX + 15, tblY + 125);
+            ctx.fillText('No Structures', tblX + 15, tblY + 160);
+
+            // Dynamic Rows Fill & Lines drawing
+            for(let i = 1; i <= 5; i++) {
+                const curRowY = tblY + rowH + (i * rowH);
+                
+                // Draw horizontal row partition line if not the bottom boundary
+                if (i < 5) {
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(ruleSplitX, curRowY);
+                    ctx.lineTo(tblX + tblWidth, curRowY);
+                    ctx.stroke();
+                }
+
+                // Fill name
+                const name = document.getElementById(`chem-name-${i}`).value;
+                const pct = document.getElementById(`chem-pct-${i}`).value;
+
+                ctx.fillStyle = 'black';
+                ctx.font = '14px Courier New, monospace';
+                if (name) {
+                    ctx.fillText(name, ruleSplitX + 15, curRowY - 11);
+                }
+                if (pct) {
+                    ctx.textAlign = 'center';
+                    ctx.fillText(pct, pctSplitX + 80, curRowY - 11);
+                    ctx.textAlign = 'left';
+                }
+            }
+
+            // --- INSTRUCTION STATEMENT CENTERED BELOW TABLE ---
+            ctx.fillStyle = 'black';
+            ctx.font = 'italic bold 12px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('All hazardous waste containers must be labeled and kept closed after adding waste!', canvas.width / 2, tblY + tblHeight + 22);
+            ctx.textAlign = 'left';
+
+            // --- HAZARDS SECTION ---
+            const hazY = 435;
+            ctx.font = 'bold 16px Arial, sans-serif';
+            ctx.fillText('Select Hazard', tblX, hazY);
+
+            // Get selected hazards list
+            let selectedHazards = [];
+            document.querySelectorAll('input[name="hazard"]').forEach(el => {
+                if(el.checked) selectedHazards.push(el.value);
+            });
+
+            // Map hazards to standard drawing vector definitions
+            const hazardMap = [
+                { id: 'Toxic', label: 'Toxic', sub: '', key: 'Toxic' },
+                { id: 'Corrosive', label: 'Corrosive', sub: 'Acid Base', key: 'Corrosive' },
+                { id: 'Flammable', label: 'Flammable', sub: '', key: 'Flammable' },
+                { id: 'Oxidizer', label: 'Oxidizer', sub: '', key: 'Oxidizer' },
+                { id: 'Reactive', label: 'Reactive', sub: 'Air Water', key: 'Reactive' },
+                { id: 'Health Hazard', label: 'Health', sub: 'Hazard', key: 'Health Hazard' }
+            ];
+
+            const diaSize = 50;
+            const startDiaX = tblX + 45;
+            const gapDiaX = 96;
+
+            hazardMap.forEach((h, index) => {
+                const isCheck = selectedHazards.includes(h.id);
+                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 45, diaSize, h.key, isCheck, h.label, h.sub);
+            });
+
+            // --- INTERNAL USE BOX ---
+            const intBoxX = canvas.width - 150;
+            const intBoxY = hazY - 12;
+            const intBoxW = 125;
+            const intBoxH = 110;
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(intBoxX, intBoxY, intBoxW, intBoxH);
+            
+            ctx.fillStyle = 'black';
+            ctx.font = 'bold 12px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Internal Use', intBoxX + (intBoxW/2), intBoxY + 18);
+            ctx.textAlign = 'left';
+
+            // --- FOOTER AND METADATA ---
+            const footerDividerY = 548;
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(10, footerDividerY);
+            ctx.lineTo(canvas.width - 10, footerDividerY);
+            ctx.stroke();
+
+            const dept = document.getElementById('ehs-dept').value || "Environmental Health & Safety";
+            const phone = document.getElementById('ehs-phone').value || "319-399-8000";
+            const email = document.getElementById('ehs-email').value || "o-ehs@coe.edu";
+
+            ctx.font = '12px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`For assistance, contact ${dept}`, canvas.width / 2, footerDividerY + 20);
+            ctx.font = 'bold 12px Arial, sans-serif';
+            ctx.fillText(`Phone: ${phone}     |     Email: ${email}     |     Web: coe.edu`, canvas.width / 2, footerDividerY + 38);
+            
+            // Accumulation date placed cleanly on the footer right margin
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 11px Arial, sans-serif';
+            ctx.fillText(`Start Date: ${dateVal}`, canvas.width - 25, footerDividerY + 20);
+            ctx.textAlign = 'left';
+        }
+
+        // Preset configuration
+        const presets = {
+            halogenated: {
+                group: "Organic Lab - Sec A",
+                phone: "319-399-8000",
+                responsible: "Dr. Jane Smith",
+                signal: "DANGER",
+                chemicals: [
+                    { name: "Dichloromethane", pct: "40%" },
+                    { name: "Chloroform", pct: "30%" },
+                    { name: "Acetone", pct: "20%" },
+                    { name: "Water", pct: "10%" },
+                    { name: "", pct: "" }
+                ],
+                hazards: ["Toxic", "Health Hazard", "Flammable"]
+            },
+            acidic: {
+                group: "Gen Chem II - Bench 4",
+                phone: "319-399-8000",
+                responsible: "Prof. Carl Williams",
+                signal: "WARNING",
+                chemicals: [
+                    { name: "Hydrochloric Acid (3M)", pct: "25%" },
+                    { name: "Water", pct: "75%" },
+                    { name: "", pct: "" },
+                    { name: "", pct: "" },
+                    { name: "", pct: "" }
+                ],
+                hazards: ["Corrosive", "Toxic"]
+            },
+            blank: {
+                group: "",
+                phone: "",
+                responsible: "",
+                signal: "",
+                chemicals: [
+                    { name: "", pct: "" },
+                    { name: "", pct: "" },
+                    { name: "", pct: "" },
+                    { name: "", pct: "" },
+                    { name: "", pct: "" }
+                ],
+                hazards: []
+            }
+        };
+
+        function loadPreset(key) {
+            const preset = presets[key];
+            if (!preset) return;
+
+            document.getElementById('input-group').value = preset.group;
+            document.getElementById('input-phone').value = preset.phone;
+            document.getElementById('input-responsible').value = preset.responsible;
+            document.getElementById('input-signal').value = preset.signal;
+
+            for(let i = 1; i <= 5; i++) {
+                const chem = preset.chemicals[i - 1];
+                document.getElementById(`chem-name-${i}`).value = chem ? chem.name : "";
+                document.getElementById(`chem-pct-${i}`).value = chem ? chem.pct : "";
+            }
+
+            document.querySelectorAll('input[name="hazard"]').forEach(el => {
+                el.checked = preset.hazards.includes(el.value);
+            });
+
+            drawLabel();
+        }
+
+        function downloadLabel() {
+            const canvas = document.getElementById('labelCanvas');
+            const link = document.createElement('a');
+            
+            let dateRaw = document.getElementById('input-date').value;
+            let filename = 'GHS_Monochrome_Waste_Label.png';
+            if (dateRaw) {
+                filename = `GHS_Waste_Label_${dateRaw}.png`;
+            }
+
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
