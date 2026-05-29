@@ -241,7 +241,7 @@
             // or if we are unchecked (so a blank template frame still prints nicely).
             if (!isChecked || !hasImage) {
                 ctx.rotate(Math.PI / 4);
-                ctx.strokeStyle = 'black';
+                ctx.strokeStyle = 'gray';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(-size/2, -size/2, size, size);
                 
@@ -726,9 +726,9 @@
         // Preset configuration
         const presets = {
             halogenated: {
-                group: "Organic Lab - Sec A",
-                phone: "319-399-8000",
-                responsible: "Dr. Jane Smith",
+                group: "",
+                phone: "319-399-XXXX",
+                responsible: "",
                 signal: "DANGER",
                 chemicals: [
                     { name: "Dichloromethane", pct: "40%" },
@@ -740,9 +740,9 @@
                 hazards: ["Toxic", "Health Hazard", "Flammable"]
             },
             acidic: {
-                group: "Gen Chem II - Bench 4",
-                phone: "319-399-8000",
-                responsible: "Prof. Carl Williams",
+                group: "",
+                phone: "319-399-XXXX",
+                responsible: "",
                 signal: "WARNING",
                 chemicals: [
                     { name: "Hydrochloric Acid (3M)", pct: "25%" },
