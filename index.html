@@ -673,13 +673,13 @@
                 { id: 'Health Hazard', label: 'Health Hazard', sub: '', key: 'Health Hazard' }
             ];
 
-            const diaSize = 75;
+            const diaSize = 65;
             const startDiaX = tblX + 50;
             const gapDiaX = 100;
 
             hazardMap.forEach((h, index) => {
                 const isCheck = selectedHazards.includes(h.id);
-                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 52, diaSize, h.key, isCheck, h.label, h.sub);
+                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 40, diaSize, h.key, isCheck, h.label, h.sub);
             });
 
             // --- INTERNAL USE BOX ---
