@@ -19,8 +19,8 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-8 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900">GHS Chemical Waste Label Generator</h1>
-                <p class="text-slate-500 mt-2">Generate high-fidelity, GHS-compliant monochrome labels tailored for Chemistry Labs.</p>
+                <h1 class="text-3xl font-bold text-slate-900">Hazardous Waste Label Generator</h1>
+                <p class="text-slate-500 mt-2">Generate GHS-compliant chemical waste labels. For questions, please contact xili@coe.edu</p>
             </div>
             
             <!-- Quick Presets -->
@@ -40,7 +40,7 @@
                     <h2 class="text-xl font-semibold border-b pb-2 mb-4">1. Lab & Generator Information</h2>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase">Lab Group</label>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase">Lab/Group Name</label>
                             <input type="text" id="input-group" placeholder="e.g., Organic Lab Section A" oninput="drawLabel()" 
                                 class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                         </div>
@@ -666,11 +666,11 @@
             // Map hazards to standard drawing vector definitions
             const hazardMap = [
                 { id: 'Toxic', label: 'Toxic', sub: '', key: 'Toxic' },
-                { id: 'Corrosive', label: 'Corrosive', sub: 'Acid Base', key: 'Corrosive' },
+                { id: 'Corrosive', label: 'Corrosive', sub: 'Acid | Base', key: 'Corrosive' },
                 { id: 'Flammable', label: 'Flammable', sub: '', key: 'Flammable' },
                 { id: 'Oxidizer', label: 'Oxidizer', sub: '', key: 'Oxidizer' },
-                { id: 'Reactive', label: 'Reactive', sub: 'Air Water', key: 'Reactive' },
-                { id: 'Health Hazard', label: 'Health', sub: 'Hazard', key: 'Health Hazard' }
+                { id: 'Reactive', label: 'Reactive', sub: 'Air | Water', key: 'Reactive' },
+                { id: 'Health Hazard', label: 'Health Hazard', sub: '', key: 'Health Hazard' }
             ];
 
             const diaSize = 65;
