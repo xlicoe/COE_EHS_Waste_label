@@ -182,17 +182,19 @@
         // =========================================================================
         // GITHUB PAGES EXTERNAL ASSETS CONFIGURATION PLACEHOLDERS
         // =========================================================================
-        // Point these to the uploaded image files on your GitHub Pages repo.
-        // If these files fail to load or are empty, the app falls back to beautiful procedural vector art.
-        const COE_LOGO_URL = 'BW_COE.jpeg'; 
+        // If your images are stored in a subfolder (e.g. 'images/', 'assets/', etc.),
+        // specify it here. Include the trailing slash. Keep it empty '' if at the root.
+        const ASSET_FOLDER = 'source/'; 
+        
+        const COE_LOGO_URL = ASSET_FOLDER + 'BW_COE.jpeg'; 
         
         const GHS_PICTOGRAM_URLS = {
-            'Toxic': 'toxic.png',                 // Matches toxic.png (skull)
-            'Corrosive': 'corrosion.png',         // Matches corrosion.png (pouring tubes)
-            'Flammable': 'flammable.png',         // Matches flammable.png (fire flame)
-            'Oxidizer': 'oxidizers.png',          // Matches oxidizers.png (flame over circle)
-            'Reactive': 'explosive.png',          // Matches explosive.png (exploding bomb)
-            'Health Hazard': 'health_hazard.png'  // Matches health_hazard.png (silhouette chest burst)
+            'Toxic': ASSET_FOLDER + 'toxic.png',                 // Matches toxic.png (skull)
+            'Corrosive': ASSET_FOLDER + 'corrosion.png',         // Matches corrosion.png (pouring tubes)
+            'Flammable': ASSET_FOLDER + 'flammable.png',         // Matches flammable.png (fire flame)
+            'Oxidizer': ASSET_FOLDER + 'oxidizers.png',          // Matches oxidizers.png (flame over circle)
+            'Reactive': ASSET_FOLDER + 'explosive.png',          // Matches explosive.png (exploding bomb)
+            'Health Hazard': ASSET_FOLDER + 'health_hazard.png'  // Matches health_hazard.png (silhouette chest burst)
         };
 
         // Preloading state management for GitHub Pages Assets
