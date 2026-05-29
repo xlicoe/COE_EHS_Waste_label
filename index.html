@@ -653,7 +653,7 @@
             ctx.textAlign = 'left';
 
             // --- HAZARDS SECTION ---
-            const hazY = 395;
+            const hazY = 385;
             ctx.font = 'bold 16px Arial, sans-serif';
             ctx.fillText('Select Hazard', tblX, hazY);
 
@@ -673,13 +673,13 @@
                 { id: 'Health Hazard', label: 'Health', sub: 'Hazard', key: 'Health Hazard' }
             ];
 
-            const diaSize = 50;
-            const startDiaX = tblX + 45;
-            const gapDiaX = 96;
+            const diaSize = 65;
+            const startDiaX = tblX + 50;
+            const gapDiaX = 100;
 
             hazardMap.forEach((h, index) => {
                 const isCheck = selectedHazards.includes(h.id);
-                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 50, diaSize, h.key, isCheck, h.label, h.sub);
+                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 52, diaSize, h.key, isCheck, h.label, h.sub);
             });
 
             // --- INTERNAL USE BOX ---
