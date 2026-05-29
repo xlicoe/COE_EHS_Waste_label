@@ -110,7 +110,7 @@
                     <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
                         <label class="flex items-center gap-2 cursor-pointer text-sm">
                             <input type="checkbox" name="hazard" value="Toxic" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
-                            💀 Toxic
+                            ☠️ Toxic
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer text-sm">
                             <input type="checkbox" name="hazard" value="Corrosive" onchange="drawLabel()" class="w-4 h-4 text-slate-900 border-slate-300 rounded">
@@ -179,7 +179,54 @@
     </div>
 
     <script>
-        // Draw an 8-pointed standard starburst
+        // =========================================================================
+        // GITHUB PAGES EXTERNAL ASSETS CONFIGURATION PLACEHOLDERS
+        // =========================================================================
+        // Point these to the uploaded image files on your GitHub Pages repo.
+        // If these files fail to load or are empty, the app falls back to beautiful procedural vector art.
+        const COE_LOGO_URL = 'BW_COE.jpeg'; 
+        
+        const GHS_PICTOGRAM_URLS = {
+            'Toxic': 'toxic.png',                 // Matches toxic.png (skull)
+            'Corrosive': 'corrosion.png',         // Matches corrosion.png (pouring tubes)
+            'Flammable': 'flammable.png',         // Matches flammable.png (fire flame)
+            'Oxidizer': 'oxidizers.png',          // Matches oxidizers.png (flame over circle)
+            'Reactive': 'explosive.png',          // Matches explosive.png (exploding bomb)
+            'Health Hazard': 'health_hazard.png'  // Matches health_hazard.png (silhouette chest burst)
+        };
+
+        // Preloading state management for GitHub Pages Assets
+        const loadedImages = {};
+        let coeLogoImage = null;
+
+        // Try preloading Coe College Logo
+        if (COE_LOGO_URL) {
+            coeLogoImage = new Image();
+            coeLogoImage.onload = () => drawLabel();
+            coeLogoImage.onerror = () => {
+                coeLogoImage = null; // Suppress loading failures & fallback gracefully
+                drawLabel();
+            };
+            coeLogoImage.src = COE_LOGO_URL;
+        }
+
+        // Try preloading GHS Pictograms
+        Object.keys(GHS_PICTOGRAM_URLS).forEach(key => {
+            const url = GHS_PICTOGRAM_URLS[key];
+            if (url) {
+                const img = new Image();
+                img.onload = () => drawLabel();
+                img.onerror = () => {
+                    delete loadedImages[key]; // Fail silently & triggers high-quality vector fallbacks
+                    drawLabel();
+                };
+                img.src = url;
+                loadedImages[key] = img;
+            }
+        });
+        // =========================================================================
+
+        // Draw an 8-pointed standard starburst (used as fallback vector draw)
         function drawStarburst(ctx, cx, cy, r) {
             ctx.beginPath();
             let points = 8;
@@ -195,7 +242,7 @@
             ctx.fill();
         }
 
-        // Draw GHS Diamond Frame + Vector Icon Art
+        // Draw GHS Diamond Frame + Vector Icon Art (or Load external image if available)
         function drawGHSDiamond(ctx, x, y, size, pictogramType, isChecked, label, subLabel) {
             ctx.save();
             ctx.translate(x, y);
@@ -216,203 +263,213 @@
             
             const s = size / 50; // Dynamic scale constant
 
-            // 2. Draw standard monochrome vector art if checked
+            // 2. Draw image asset or vector fallback
             if (isChecked) {
-                ctx.fillStyle = 'black';
-                ctx.strokeStyle = 'black';
-                
-                switch(pictogramType) {
-                    case 'Toxic':
-                        // Crossbones behind skull
-                        ctx.lineWidth = 3 * s;
-                        ctx.lineCap = 'round';
-                        ctx.beginPath();
-                        ctx.moveTo(-16 * s, -14 * s); ctx.lineTo(16 * s, 14 * s);
-                        ctx.moveTo(16 * s, -14 * s); ctx.lineTo(-16 * s, 14 * s);
-                        ctx.stroke();
-
-                        // Bone Knobs
-                        const knobs = [[-16, -14], [16, 14], [16, -14], [-16, 14]];
-                        knobs.forEach(([kx, ky]) => {
+                // Check if external image is hosted and preloaded
+                if (loadedImages[pictogramType] && loadedImages[pictogramType].complete) {
+                    ctx.save();
+                    // Draw image at full diamond center (scaled down slightly to fit margin)
+                    const imgSize = size * 0.85;
+                    ctx.drawImage(loadedImages[pictogramType], -imgSize/2, -imgSize/2, imgSize, imgSize);
+                    ctx.restore();
+                } else {
+                    // FALLBACK: Draw high-fidelity vector drawings in monochrome
+                    ctx.fillStyle = 'black';
+                    ctx.strokeStyle = 'black';
+                    
+                    switch(pictogramType) {
+                        case 'Toxic':
+                            // Crossbones behind skull
+                            ctx.lineWidth = 3 * s;
+                            ctx.lineCap = 'round';
                             ctx.beginPath();
-                            ctx.arc(kx * s, ky * s - 1.5 * s, 2.5 * s, 0, Math.PI * 2);
-                            ctx.arc(kx * s - 1.5 * s, ky * s, 2.5 * s, 0, Math.PI * 2);
-                            ctx.fill();
-                        });
-
-                        // Skull silhouette
-                        ctx.beginPath();
-                        ctx.arc(0, -3 * s, 8.5 * s, Math.PI, 0);
-                        ctx.lineTo(5.5 * s, 6 * s);
-                        ctx.lineTo(-5.5 * s, 6 * s);
-                        ctx.closePath();
-                        ctx.fill();
-
-                        // Teeth/Jaw Frame
-                        ctx.lineWidth = 1.5 * s;
-                        ctx.beginPath();
-                        ctx.moveTo(-3 * s, 6 * s);
-                        ctx.lineTo(-3 * s, 9 * s);
-                        ctx.lineTo(3 * s, 9 * s);
-                        ctx.lineTo(3 * s, 6 * s);
-                        ctx.stroke();
-                        
-                        // Teeth ticks
-                        ctx.beginPath();
-                        ctx.moveTo(-1 * s, 6 * s); ctx.lineTo(-1 * s, 9 * s);
-                        ctx.moveTo(1 * s, 6 * s); ctx.lineTo(1 * s, 9 * s);
-                        ctx.stroke();
-
-                        // Eye sockets (white cutout)
-                        ctx.fillStyle = 'white';
-                        ctx.beginPath();
-                        ctx.arc(-2.8 * s, -1 * s, 2 * s, 0, Math.PI * 2);
-                        ctx.arc(2.8 * s, -1 * s, 2 * s, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // Nose cavity (white cutout)
-                        ctx.beginPath();
-                        ctx.moveTo(0, 1 * s);
-                        ctx.lineTo(-1.2 * s, 3.5 * s);
-                        ctx.lineTo(1.2 * s, 3.5 * s);
-                        ctx.closePath();
-                        ctx.fill();
-                        break;
-
-                    case 'Corrosive':
-                        ctx.lineWidth = 2 * s;
-                        // Surface Plate (Left)
-                        ctx.beginPath();
-                        ctx.moveTo(-18 * s, 10 * s);
-                        ctx.lineTo(-3 * s, 10 * s);
-                        ctx.stroke();
-                        // Surface Plate Divot (Corrosion mark)
-                        ctx.beginPath();
-                        ctx.arc(-10 * s, 10 * s, 3 * s, 0, Math.PI);
-                        ctx.fillStyle = 'white';
-                        ctx.fill();
-                        ctx.strokeStyle = 'black';
-                        ctx.stroke();
-
-                        // Human Hand (Right)
-                        ctx.fillStyle = 'black';
-                        ctx.beginPath();
-                        ctx.moveTo(3 * s, 10 * s);
-                        ctx.lineTo(17 * s, 10 * s);
-                        ctx.lineTo(17 * s, 5 * s);
-                        ctx.lineTo(11 * s, 5 * s);
-                        ctx.closePath();
-                        ctx.fill();
-                        // Pouring Slanted Tube 1
-                        ctx.save();
-                        ctx.translate(-11 * s, -10 * s);
-                        ctx.rotate(-Math.PI / 6);
-                        ctx.strokeRect(-2.5 * s, -7 * s, 5 * s, 14 * s);
-                        ctx.restore();
-                        // Pouring Slanted Tube 2
-                        ctx.save();
-                        ctx.translate(11 * s, -10 * s);
-                        ctx.rotate(Math.PI / 6);
-                        ctx.strokeRect(-2.5 * s, -7 * s, 5 * s, 14 * s);
-                        ctx.restore();
-
-                        // Liquid Drops falling
-                        ctx.beginPath();
-                        ctx.arc(-8 * s, -2 * s, 1.5 * s, 0, Math.PI * 2);
-                        ctx.arc(-10 * s, 4 * s, 1.5 * s, 0, Math.PI * 2);
-                        ctx.arc(8 * s, -2 * s, 1.5 * s, 0, Math.PI * 2);
-                        ctx.arc(10 * s, 4 * s, 1.5 * s, 0, Math.PI * 2);
-                        ctx.fill();
-                        break;
-
-                    case 'Flammable':
-                        // Standard Flame
-                        ctx.beginPath();
-                        ctx.moveTo(-15 * s, 12 * s);
-                        ctx.lineTo(15 * s, 12 * s);
-                        ctx.lineWidth = 3 * s;
-                        ctx.stroke();
-
-                        ctx.beginPath();
-                        ctx.moveTo(-11 * s, 9 * s);
-                        ctx.bezierCurveTo(-14 * s, -2 * s, -5 * s, -13 * s, -2 * s, -17 * s);
-                        ctx.bezierCurveTo(-4 * s, -7 * s, -6 * s, 0, -3 * s, 2 * s);
-                        ctx.bezierCurveTo(-2 * s, -9 * s, 4 * s, -15 * s, 8 * s, -17 * s);
-                        ctx.bezierCurveTo(6 * s, -5 * s, 4 * s, 1 * s, 6 * s, 3 * s);
-                        ctx.bezierCurveTo(9 * s, -1 * s, 11 * s, -6 * s, 12 * s, -8 * s);
-                        ctx.bezierCurveTo(14 * s, 2 * s, 10 * s, 9 * s, 6 * s, 9 * s);
-                        ctx.closePath();
-                        ctx.fill();
-                        break;
-
-                    case 'Oxidizer':
-                        // Circle 'O' with Flame
-                        ctx.lineWidth = 3.5 * s;
-                        ctx.beginPath();
-                        ctx.arc(0, 5 * s, 8.5 * s, 0, Math.PI * 2);
-                        ctx.stroke();
-
-                        ctx.beginPath();
-                        ctx.moveTo(-6 * s, -1 * s);
-                        ctx.bezierCurveTo(-10 * s, -9 * s, -3 * s, -15 * s, 0, -19 * s);
-                        ctx.bezierCurveTo(-1 * s, -11 * s, -3 * s, -7 * s, 0, -3 * s);
-                        ctx.bezierCurveTo(2 * s, -10 * s, 6 * s, -14 * s, 8 * s, -16 * s);
-                        ctx.bezierCurveTo(6 * s, -6 * s, 2 * s, -1 * s, 5 * s, -1 * s);
-                        ctx.bezierCurveTo(7 * s, -3 * s, 9 * s, -7 * s, 10 * s, -9 * s);
-                        ctx.bezierCurveTo(11 * s, -1 * s, 7 * s, 5 * s, 4 * s, 5 * s);
-                        ctx.closePath();
-                        ctx.fill();
-                        break;
-
-                    case 'Reactive':
-                        // Exploding Bomb
-                        ctx.beginPath();
-                        ctx.arc(-4 * s, 4 * s, 5 * s, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        ctx.lineWidth = 2 * s;
-                        const explosionRays = [
-                            [-13, -13], [0, -17], [13, -13], [17, 0], [13, 13], [-15, 2]
-                        ];
-                        explosionRays.forEach(([rx, ry]) => {
-                            ctx.beginPath();
-                            ctx.moveTo(-4 * s, 4 * s);
-                            ctx.lineTo(rx * s, ry * s);
+                            ctx.moveTo(-16 * s, -14 * s); ctx.lineTo(16 * s, 14 * s);
+                            ctx.moveTo(16 * s, -14 * s); ctx.lineTo(-16 * s, 14 * s);
                             ctx.stroke();
-                        });
 
-                        ctx.beginPath();
-                        ctx.moveTo(-9 * s, -4 * s); ctx.lineTo(-14 * s, -7 * s); ctx.lineTo(-11 * s, -1 * s);
-                        ctx.moveTo(4 * s, -9 * s); ctx.lineTo(7 * s, -14 * s); ctx.lineTo(9 * s, -7 * s);
-                        ctx.moveTo(7 * s, 1 * s); ctx.lineTo(13 * s, 4 * s); ctx.lineTo(9 * s, 7 * s);
-                        ctx.closePath();
-                        ctx.fill();
-                        break;
+                            // Bone Knobs
+                            const knobs = [[-16, -14], [16, 14], [16, -14], [-16, 14]];
+                            knobs.forEach(([kx, ky]) => {
+                                ctx.beginPath();
+                                ctx.arc(kx * s, ky * s - 1.5 * s, 2.5 * s, 0, Math.PI * 2);
+                                ctx.arc(kx * s - 1.5 * s, ky * s, 2.5 * s, 0, Math.PI * 2);
+                                ctx.fill();
+                            });
 
-                    case 'Health Hazard':
-                        // Elegant bust outline + Exploding GHS center star
-                        ctx.beginPath();
-                        // 1. Head Silhouette
-                        ctx.arc(0, -9 * s, 5.5 * s, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        // 2. Body / Shoulders Silhouette
-                        ctx.beginPath();
-                        ctx.moveTo(-16 * s, 14 * s);
-                        ctx.bezierCurveTo(-16 * s, 0, -8 * s, -1 * s, -6 * s, -1 * s);
-                        ctx.lineTo(6 * s, -1 * s);
-                        ctx.bezierCurveTo(8 * s, -1 * s, 16 * s, 0, 16 * s, 14 * s);
-                        ctx.closePath();
-                        ctx.fill();
+                            // Skull silhouette
+                            ctx.beginPath();
+                            ctx.arc(0, -3 * s, 8.5 * s, Math.PI, 0);
+                            ctx.lineTo(5.5 * s, 6 * s);
+                            ctx.lineTo(-5.5 * s, 6 * s);
+                            ctx.closePath();
+                            ctx.fill();
 
-                        // 3. Crisp Exploding GHS Star (Cutout in White over chest)
-                        ctx.fillStyle = 'white';
-                        drawStarburst(ctx, 0, 6 * s, 6.5 * s);
-                        
-                        // 4. Starburst core definition detail
-                        ctx.fillStyle = 'black';
-                        drawStarburst(ctx, 0, 6 * s, 2 * s);
-                        break;
+                            // Teeth/Jaw Frame
+                            ctx.lineWidth = 1.5 * s;
+                            ctx.beginPath();
+                            ctx.moveTo(-3 * s, 6 * s);
+                            ctx.lineTo(-3 * s, 9 * s);
+                            ctx.lineTo(3 * s, 9 * s);
+                            ctx.lineTo(3 * s, 6 * s);
+                            ctx.stroke();
+                            
+                            // Teeth ticks
+                            ctx.beginPath();
+                            ctx.moveTo(-1 * s, 6 * s); ctx.lineTo(-1 * s, 9 * s);
+                            ctx.moveTo(1 * s, 6 * s); ctx.lineTo(1 * s, 9 * s);
+                            ctx.stroke();
+
+                            // Eye sockets (white cutout)
+                            ctx.fillStyle = 'white';
+                            ctx.beginPath();
+                            ctx.arc(-2.8 * s, -1 * s, 2 * s, 0, Math.PI * 2);
+                            ctx.arc(2.8 * s, -1 * s, 2 * s, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            // Nose cavity (white cutout)
+                            ctx.beginPath();
+                            ctx.moveTo(0, 1 * s);
+                            ctx.lineTo(-1.2 * s, 3.5 * s);
+                            ctx.lineTo(1.2 * s, 3.5 * s);
+                            ctx.closePath();
+                            ctx.fill();
+                            break;
+
+                        case 'Corrosive':
+                            ctx.lineWidth = 2 * s;
+                            // Surface Plate (Left)
+                            ctx.beginPath();
+                            ctx.moveTo(-18 * s, 10 * s);
+                            ctx.lineTo(-3 * s, 10 * s);
+                            ctx.stroke();
+                            // Surface Plate Divot (Corrosion mark)
+                            ctx.beginPath();
+                            ctx.arc(-10 * s, 10 * s, 3 * s, 0, Math.PI);
+                            ctx.fillStyle = 'white';
+                            ctx.fill();
+                            ctx.strokeStyle = 'black';
+                            ctx.stroke();
+
+                            // Human Hand (Right)
+                            ctx.fillStyle = 'black';
+                            ctx.beginPath();
+                            ctx.moveTo(3 * s, 10 * s);
+                            ctx.lineTo(17 * s, 10 * s);
+                            ctx.lineTo(17 * s, 5 * s);
+                            ctx.lineTo(11 * s, 5 * s);
+                            ctx.closePath();
+                            ctx.fill();
+                            // Pouring Slanted Tube 1
+                            ctx.save();
+                            ctx.translate(-11 * s, -10 * s);
+                            ctx.rotate(-Math.PI / 6);
+                            ctx.strokeRect(-2.5 * s, -7 * s, 5 * s, 14 * s);
+                            ctx.restore();
+                            // Pouring Slanted Tube 2
+                            ctx.save();
+                            ctx.translate(11 * s, -10 * s);
+                            ctx.rotate(Math.PI / 6);
+                            ctx.strokeRect(-2.5 * s, -7 * s, 5 * s, 14 * s);
+                            ctx.restore();
+
+                            // Liquid Drops falling
+                            ctx.beginPath();
+                            ctx.arc(-8 * s, -2 * s, 1.5 * s, 0, Math.PI * 2);
+                            ctx.arc(-10 * s, 4 * s, 1.5 * s, 0, Math.PI * 2);
+                            ctx.arc(8 * s, -2 * s, 1.5 * s, 0, Math.PI * 2);
+                            ctx.arc(10 * s, 4 * s, 1.5 * s, 0, Math.PI * 2);
+                            ctx.fill();
+                            break;
+
+                        case 'Flammable':
+                            // Standard Flame
+                            ctx.beginPath();
+                            ctx.moveTo(-15 * s, 12 * s);
+                            ctx.lineTo(15 * s, 12 * s);
+                            ctx.lineWidth = 3 * s;
+                            ctx.stroke();
+
+                            ctx.beginPath();
+                            ctx.moveTo(-11 * s, 9 * s);
+                            ctx.bezierCurveTo(-14 * s, -2 * s, -5 * s, -13 * s, -2 * s, -17 * s);
+                            ctx.bezierCurveTo(-4 * s, -7 * s, -6 * s, 0, -3 * s, 2 * s);
+                            ctx.bezierCurveTo(-2 * s, -9 * s, 4 * s, -15 * s, 8 * s, -17 * s);
+                            ctx.bezierCurveTo(6 * s, -5 * s, 4 * s, 1 * s, 6 * s, 3 * s);
+                            ctx.bezierCurveTo(9 * s, -1 * s, 11 * s, -6 * s, 12 * s, -8 * s);
+                            ctx.bezierCurveTo(14 * s, 2 * s, 10 * s, 9 * s, 6 * s, 9 * s);
+                            ctx.closePath();
+                            ctx.fill();
+                            break;
+
+                        case 'Oxidizer':
+                            // Circle 'O' with Flame
+                            ctx.lineWidth = 3.5 * s;
+                            ctx.beginPath();
+                            ctx.arc(0, 5 * s, 8.5 * s, 0, Math.PI * 2);
+                            ctx.stroke();
+
+                            ctx.beginPath();
+                            ctx.moveTo(-6 * s, -1 * s);
+                            ctx.bezierCurveTo(-10 * s, -9 * s, -3 * s, -15 * s, 0, -19 * s);
+                            ctx.bezierCurveTo(-1 * s, -11 * s, -3 * s, -7 * s, 0, -3 * s);
+                            ctx.bezierCurveTo(2 * s, -10 * s, 6 * s, -14 * s, 8 * s, -16 * s);
+                            ctx.bezierCurveTo(6 * s, -6 * s, 2 * s, -1 * s, 5 * s, -1 * s);
+                            ctx.bezierCurveTo(7 * s, -3 * s, 9 * s, -7 * s, 10 * s, -9 * s);
+                            ctx.bezierCurveTo(11 * s, -1 * s, 7 * s, 5 * s, 4 * s, 5 * s);
+                            ctx.closePath();
+                            ctx.fill();
+                            break;
+
+                        case 'Reactive':
+                            // Exploding Bomb
+                            ctx.beginPath();
+                            ctx.arc(-4 * s, 4 * s, 5 * s, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            ctx.lineWidth = 2 * s;
+                            const explosionRays = [
+                                [-13, -13], [0, -17], [13, -13], [17, 0], [13, 13], [-15, 2]
+                            ];
+                            explosionRays.forEach(([rx, ry]) => {
+                                ctx.beginPath();
+                                ctx.moveTo(-4 * s, 4 * s);
+                                ctx.lineTo(rx * s, ry * s);
+                                ctx.stroke();
+                            });
+
+                            ctx.beginPath();
+                            ctx.moveTo(-9 * s, -4 * s); ctx.lineTo(-14 * s, -7 * s); ctx.lineTo(-11 * s, -1 * s);
+                            ctx.moveTo(4 * s, -9 * s); ctx.lineTo(7 * s, -14 * s); ctx.lineTo(9 * s, -7 * s);
+                            ctx.moveTo(7 * s, 1 * s); ctx.lineTo(13 * s, 4 * s); ctx.lineTo(9 * s, 7 * s);
+                            ctx.closePath();
+                            ctx.fill();
+                            break;
+
+                        case 'Health Hazard':
+                            // Elegant bust outline + Exploding GHS center star
+                            ctx.beginPath();
+                            // 1. Head Silhouette
+                            ctx.arc(0, -9 * s, 5.5 * s, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // 2. Body / Shoulders Silhouette
+                            ctx.beginPath();
+                            ctx.moveTo(-16 * s, 14 * s);
+                            ctx.bezierCurveTo(-16 * s, 0, -8 * s, -1 * s, -6 * s, -1 * s);
+                            ctx.lineTo(6 * s, -1 * s);
+                            ctx.bezierCurveTo(8 * s, -1 * s, 16 * s, 0, 16 * s, 14 * s);
+                            ctx.closePath();
+                            ctx.fill();
+
+                            // 3. Crisp Exploding GHS Star (Cutout in White over chest)
+                            ctx.fillStyle = 'white';
+                            drawStarburst(ctx, 0, 6 * s, 6.5 * s);
+                            
+                            // 4. Starburst core definition detail
+                            ctx.fillStyle = 'black';
+                            drawStarburst(ctx, 0, 6 * s, 2 * s);
+                            break;
+                    }
                 }
             } else {
                 // Diagonal strike-through for unselected boxes
@@ -424,16 +481,17 @@
                 ctx.stroke();
             }
 
-            // Labels under diamonds
+            // Labels and Checkboxes shifted down significantly (using size * 1.05 and size * 1.28)
+            // This guarantees the label starts at least 15 pixels clear of the bottom diamond tip (y = 35.4).
             ctx.fillStyle = 'black';
             ctx.font = 'bold 11px Arial, sans-serif';
             ctx.textAlign = 'center';
             
             const checkSymbol = isChecked ? '☑' : '☐';
-            ctx.fillText(`${checkSymbol} ${label}`, 0, size * 0.78);
+            ctx.fillText(`${checkSymbol} ${label}`, 0, size * 1.05);
             if (subLabel) {
                 ctx.font = '9px Arial, sans-serif';
-                ctx.fillText(subLabel, 0, size * 0.98);
+                ctx.fillText(subLabel, 0, size * 1.28);
             }
             
             ctx.restore();
@@ -473,12 +531,31 @@
                 ctx.restore();
             }
 
+            // =========================================================================
+            // ASSET: Draw Coe College Corner Logo if image URL is supplied
+            // =========================================================================
+            if (coeLogoImage && coeLogoImage.complete) {
+                ctx.save();
+                // Establish box boundaries for standard header logo sizing (e.g., max height 60px)
+                const targetH = 60;
+                const aspect = coeLogoImage.width / coeLogoImage.height;
+                const targetW = targetH * aspect;
+                const logoX = canvas.width - targetW - 25;
+                const logoY = 18;
+                
+                // Draw custom monochrome/grayscale formatted logo
+                ctx.filter = 'grayscale(100%) brightness(0%)'; // forces monochrome print layout
+                ctx.drawImage(coeLogoImage, logoX, logoY, targetW, targetH);
+                ctx.restore();
+            }
+            // =========================================================================
+
             // Double header line divider
             ctx.lineWidth = 2;
             ctx.strokeStyle = 'black';
             ctx.beginPath();
-            ctx.moveTo(10, 95);
-            ctx.lineTo(canvas.width - 10, 95);
+            ctx.moveTo(10, 85);
+            ctx.lineTo(canvas.width - 10, 85);
             ctx.stroke();
 
             // --- LAB GROUP & PHONE DETAILS ROW ---
@@ -497,34 +574,34 @@
             }
 
             ctx.font = 'bold 15px Arial, sans-serif';
-            ctx.fillText('Lab Group:', 25, 122);
+            ctx.fillText('Lab Group:', 25, 112);
             ctx.font = '15px Courier New, monospace';
-            ctx.fillText(groupVal, 115, 122);
+            ctx.fillText(groupVal, 115, 112);
 
             ctx.font = 'bold 15px Arial, sans-serif';
-            ctx.fillText('Phone:', 470, 122);
+            ctx.fillText('Phone:', 470, 112);
             ctx.font = '15px Courier New, monospace';
-            ctx.fillText(phoneVal, 530, 122);
+            ctx.fillText(phoneVal, 530, 112);
 
             ctx.font = 'bold 15px Arial, sans-serif';
-            ctx.fillText('Responsible Individual:', 25, 155);
+            ctx.fillText('Responsible Individual:', 25, 142);
             ctx.font = '15px Courier New, monospace';
-            ctx.fillText(responsibleVal, 205, 155);
+            ctx.fillText(responsibleVal, 205, 142);
 
             // Row Underlines / Grids matching sample
             ctx.lineWidth = 1;
             ctx.strokeStyle = '#aaa';
             ctx.beginPath();
-            ctx.moveTo(115, 126); ctx.lineTo(450, 126);
-            ctx.moveTo(530, 126); ctx.lineTo(775, 126);
-            ctx.moveTo(205, 159); ctx.lineTo(775, 159);
+            ctx.moveTo(115, 116); ctx.lineTo(450, 116);
+            ctx.moveTo(530, 116); ctx.lineTo(775, 116);
+            ctx.moveTo(205, 146); ctx.lineTo(775, 146);
             ctx.stroke();
 
             // --- MAIN CONTENTS TABLE ---
             const tblX = 25;
-            const tblY = 175;
+            const tblY = 160;
             const tblWidth = 750;
-            const tblHeight = 205;
+            const tblHeight = 180;
             
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
@@ -538,7 +615,7 @@
             ctx.stroke();
 
             // Table Header Line
-            const rowH = 34;
+            const rowH = 30;
             ctx.beginPath();
             ctx.moveTo(ruleSplitX, tblY + rowH);
             ctx.lineTo(tblX + tblWidth, tblY + rowH);
@@ -546,8 +623,8 @@
 
             // Table Labels
             ctx.font = 'bold 14px Arial, sans-serif';
-            ctx.fillText('Contents', ruleSplitX + 15, tblY + 22);
-            ctx.fillText('Approximate %', tblX + tblWidth - 140, tblY + 22);
+            ctx.fillText('Contents', ruleSplitX + 15, tblY + 20);
+            ctx.fillText('Approximate %', tblX + tblWidth - 140, tblY + 20);
 
             // Vertical partition for approximate %
             const pctSplitX = tblX + tblWidth - 160;
@@ -558,13 +635,13 @@
 
             // Draw left side guidelines warnings
             ctx.font = 'italic bold 14px Arial, sans-serif';
-            ctx.fillText('Use Only Proper', tblX + 15, tblY + 30);
-            ctx.fillText('Chemical Names', tblX + 15, tblY + 48);
+            ctx.fillText('Use Only Proper', tblX + 15, tblY + 26);
+            ctx.fillText('Chemical Names', tblX + 15, tblY + 44);
             
             ctx.font = 'bold 12px Arial, sans-serif';
-            ctx.fillText('No Abbreviations', tblX + 15, tblY + 90);
-            ctx.fillText('No Formulas', tblX + 15, tblY + 125);
-            ctx.fillText('No Structures', tblX + 15, tblY + 160);
+            ctx.fillText('No Abbreviations', tblX + 15, tblY + 80);
+            ctx.fillText('No Formulas', tblX + 15, tblY + 112);
+            ctx.fillText('No Structures', tblX + 15, tblY + 144);
 
             // Dynamic Rows Fill & Lines drawing
             for(let i = 1; i <= 5; i++) {
@@ -587,11 +664,11 @@
                 ctx.fillStyle = 'black';
                 ctx.font = '14px Courier New, monospace';
                 if (name) {
-                    ctx.fillText(name, ruleSplitX + 15, curRowY - 11);
+                    ctx.fillText(name, ruleSplitX + 15, curRowY - 9);
                 }
                 if (pct) {
                     ctx.textAlign = 'center';
-                    ctx.fillText(pct, pctSplitX + 80, curRowY - 11);
+                    ctx.fillText(pct, pctSplitX + 80, curRowY - 9);
                     ctx.textAlign = 'left';
                 }
             }
@@ -604,7 +681,7 @@
             ctx.textAlign = 'left';
 
             // --- HAZARDS SECTION ---
-            const hazY = 435;
+            const hazY = 395;
             ctx.font = 'bold 16px Arial, sans-serif';
             ctx.fillText('Select Hazard', tblX, hazY);
 
@@ -630,12 +707,12 @@
 
             hazardMap.forEach((h, index) => {
                 const isCheck = selectedHazards.includes(h.id);
-                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 45, diaSize, h.key, isCheck, h.label, h.sub);
+                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 50, diaSize, h.key, isCheck, h.label, h.sub);
             });
 
             // --- INTERNAL USE BOX ---
             const intBoxX = canvas.width - 150;
-            const intBoxY = hazY - 12;
+            const intBoxY = hazY - 10;
             const intBoxW = 125;
             const intBoxH = 110;
             ctx.strokeStyle = 'black';
@@ -649,7 +726,7 @@
             ctx.textAlign = 'left';
 
             // --- FOOTER AND METADATA ---
-            const footerDividerY = 548;
+            const footerDividerY = 525;
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 1;
             ctx.beginPath();
