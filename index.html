@@ -673,13 +673,13 @@
                 { id: 'Health Hazard', label: 'Health Hazard', sub: '', key: 'Health Hazard' }
             ];
 
-            const diaSize = 65;
+            const diaSize = 55;
             const startDiaX = tblX + 50;
             const gapDiaX = 100;
 
             hazardMap.forEach((h, index) => {
                 const isCheck = selectedHazards.includes(h.id);
-                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 40, diaSize, h.key, isCheck, h.label, h.sub);
+                drawGHSDiamond(ctx, startDiaX + (index * gapDiaX), hazY + 45, diaSize, h.key, isCheck, h.label, h.sub);
             });
 
             // --- INTERNAL USE BOX ---
@@ -706,9 +706,9 @@
             ctx.lineTo(canvas.width - 10, footerDividerY);
             ctx.stroke();
 
-            const dept = document.getElementById('ehs-dept').value || "Environmental Health & Safety";
-            const phone = document.getElementById('ehs-phone').value || "319-399-8000";
-            const email = document.getElementById('ehs-email').value || "ehs@example.edu";
+            const dept = document.getElementById('ehs-dept').value || "the Chief Safety Officer";
+            const phone = document.getElementById('ehs-phone').value || "319-399-XXXX";
+            const email = document.getElementById('ehs-email').value || "XXX@coe.edu";
 
             ctx.font = '12px Arial, sans-serif';
             ctx.textAlign = 'center';
