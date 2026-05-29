@@ -20,7 +20,7 @@
         <header class="mb-8 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900">GHS Chemical Waste Label Generator</h1>
-                <p class="text-slate-500 mt-2">Generate high-fidelity, GHS-compliant monochrome labels tailored for Coe College Chemistry Labs.</p>
+                <p class="text-slate-500 mt-2">Generate high-fidelity, GHS-compliant monochrome labels tailored for Chemistry Labs.</p>
             </div>
             
             <!-- Quick Presets -->
@@ -149,7 +149,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase">EHS Email</label>
-                                <input type="text" id="ehs-email" value="o-ehs@coe.edu" oninput="drawLabel()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                <input type="text" id="ehs-email" value="ehs@example.edu" oninput="drawLabel()" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
                             </div>
                         </div>
                     </div>
@@ -186,8 +186,6 @@
         // specify it here. Include the trailing slash. Keep it empty '' if at the root.
         const ASSET_FOLDER = 'source/'; 
         
-        const COE_LOGO_URL = ASSET_FOLDER + 'BW_COE.jpeg'; 
-        
         const GHS_PICTOGRAM_URLS = {
             'Toxic': ASSET_FOLDER + 'toxic.png',                 // Matches toxic.png (skull)
             'Corrosive': ASSET_FOLDER + 'corrosion.png',         // Matches corrosion.png (pouring tubes)
@@ -199,18 +197,6 @@
 
         // Preloading state management for GitHub Pages Assets
         const loadedImages = {};
-        let coeLogoImage = null;
-
-        // Try preloading Coe College Logo
-        if (COE_LOGO_URL) {
-            coeLogoImage = new Image();
-            coeLogoImage.onload = () => drawLabel();
-            coeLogoImage.onerror = () => {
-                coeLogoImage = null; // Suppress loading failures & fallback gracefully
-                drawLabel();
-            };
-            coeLogoImage.src = COE_LOGO_URL;
-        }
 
         // Try preloading GHS Pictograms
         Object.keys(GHS_PICTOGRAM_URLS).forEach(key => {
@@ -249,30 +235,33 @@
             ctx.save();
             ctx.translate(x, y);
             
-            // 1. Draw diamond frame (rotated at 45 deg)
-            ctx.rotate(Math.PI / 4);
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(-size/2, -size/2, size, size);
-            
-            // Solid bolder frame if checked
-            if (isChecked) {
-                ctx.lineWidth = 5;
+            const hasImage = loadedImages[pictogramType] && loadedImages[pictogramType].complete;
+
+            // 1. Draw diamond frame (rotated at 45 deg) - ONLY if we don't have an image to draw,
+            // or if we are unchecked (so a blank template frame still prints nicely).
+            if (!isChecked || !hasImage) {
+                ctx.rotate(Math.PI / 4);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
                 ctx.strokeRect(-size/2, -size/2, size, size);
+                
+                // Solid bolder frame if checked (procedural fallback state)
+                if (isChecked) {
+                    ctx.lineWidth = 5;
+                    ctx.strokeRect(-size/2, -size/2, size, size);
+                }
+                ctx.rotate(-Math.PI / 4); // reset rotation
             }
-            
-            ctx.rotate(-Math.PI / 4); // reset rotation for rendering upright icon art
             
             const s = size / 50; // Dynamic scale constant
 
             // 2. Draw image asset or vector fallback
             if (isChecked) {
                 // Check if external image is hosted and preloaded
-                if (loadedImages[pictogramType] && loadedImages[pictogramType].complete) {
+                if (hasImage) {
                     ctx.save();
-                    // Draw image at full diamond center (scaled down slightly to fit margin)
-                    const imgSize = size * 0.85;
-                    ctx.drawImage(loadedImages[pictogramType], -imgSize/2, -imgSize/2, imgSize, imgSize);
+                    // Draw full size since the image already contains its own diamond border
+                    ctx.drawImage(loadedImages[pictogramType], -size/2, -size/2, size, size);
                     ctx.restore();
                 } else {
                     // FALLBACK: Draw high-fidelity vector drawings in monochrome
@@ -533,25 +522,6 @@
                 ctx.restore();
             }
 
-            // =========================================================================
-            // ASSET: Draw Coe College Corner Logo if image URL is supplied
-            // =========================================================================
-            if (coeLogoImage && coeLogoImage.complete) {
-                ctx.save();
-                // Establish box boundaries for standard header logo sizing (e.g., max height 60px)
-                const targetH = 60;
-                const aspect = coeLogoImage.width / coeLogoImage.height;
-                const targetW = targetH * aspect;
-                const logoX = canvas.width - targetW - 25;
-                const logoY = 18;
-                
-                // Draw custom monochrome/grayscale formatted logo
-                ctx.filter = 'grayscale(100%) brightness(0%)'; // forces monochrome print layout
-                ctx.drawImage(coeLogoImage, logoX, logoY, targetW, targetH);
-                ctx.restore();
-            }
-            // =========================================================================
-
             // Double header line divider
             ctx.lineWidth = 2;
             ctx.strokeStyle = 'black';
@@ -738,13 +708,13 @@
 
             const dept = document.getElementById('ehs-dept').value || "Environmental Health & Safety";
             const phone = document.getElementById('ehs-phone').value || "319-399-8000";
-            const email = document.getElementById('ehs-email').value || "o-ehs@coe.edu";
+            const email = document.getElementById('ehs-email').value || "ehs@example.edu";
 
             ctx.font = '12px Arial, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(`For assistance, contact ${dept}`, canvas.width / 2, footerDividerY + 20);
             ctx.font = 'bold 12px Arial, sans-serif';
-            ctx.fillText(`Phone: ${phone}     |     Email: ${email}     |     Web: coe.edu`, canvas.width / 2, footerDividerY + 38);
+            ctx.fillText(`Phone: ${phone}     |     Email: ${email}`, canvas.width / 2, footerDividerY + 38);
             
             // Accumulation date placed cleanly on the footer right margin
             ctx.textAlign = 'right';
